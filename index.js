@@ -1,132 +1,102 @@
-let main = document.querySelector('.main')
-let fab = document.querySelector('.fab-container')
-let task = document.querySelector('.task')
-let taskDone = document.querySelector('.task-done')
-let taskUndone = document.querySelector('.task-undone')
-let autoText = document.querySelector('.autoText')
-let overall = document.querySelector('.overall');   
-let overallContainer = document.querySelector('.overall-container');
-let icon = document.querySelector('.icon');
-let task2 = document.querySelector('.task2'); 
+document.addEventListener('DOMContentLoaded', () => {
+    const fab = document.querySelector('.round-btn');
+    const todoList = document.querySelector('#todo-list');
+    const doneList = document.querySelector('#done-list');
+    const autoText = document.querySelector('.autoText');
+    const progressFill = document.querySelector('#progress-fill');
+    const statusText = document.querySelector('#status-text');
+    const homeBtn = document.querySelector('#mission-home');
 
+    const msg = "Your day doesn't run you; you run the day. Precision is the only path to dominance. Deploy your first mission.";
+    let index = 0;
+    let typeTimeout;
 
-
-let taskdiv = document.createElement('div');
-taskdiv.classList.add('task-div');
-
-
-
-let taskdondiv = document.createElement('div');
-taskdondiv.classList.add('task-div');
-
-taskDone.appendChild(taskdondiv);
-
-let taskundone = document.createElement('div');
-taskundone.classList.add('task-div');
-taskUndone.appendChild(taskundone);
-
-let ullist = document.createElement('ul');
-ullist.classList.add('mission-list');
-ullist.id = 'main-task-container';
-
-taskdiv.appendChild(ullist);
-
-
-const message = "Your day doesn't run you; you run the day. Idle hands build nothing. Precision is the only path to dominance. The world is fueled by those who execute while others hesitate. Every second unassigned is a resource wasted. Do not let your potential drift—command it into existence. Your objectives are waiting for a leader. Lock in your targets now. Locate the [+] trigger at the bottom right corner to deploy your first mission.";
-
-let index = 0;
-
-function typeWriter() {
-  if (index < message.length) {
-    autoText.innerHTML += message.charAt(index);
-    index++;
-
-    setTimeout(typeWriter, 30); 
-  }
-}
-
-// Start the sequence when the window loads
-window.onload = typeWriter;
-typeWriter();
-
-
-fab.addEventListener('click', pop);
-
-
-function pop(){
-autoText.remove();
-
-
-let newTask = document.createElement('div');
-let input = document.createElement('input');
-let checkbox = document.createElement('input');
-let btn = document.createElement('button');
-let exit = document.createElement('button');
-
-
-exit.textContent = 'X';
-exit.classList.add('exit-btn');
-btn.textContent = 'submit';
-btn.classList.add('deploy-btn');
-
-
-newTask.classList.add('new-task');
-input.classList.add('input-container');
-input.setAttribute('type', 'text');
-input.setAttribute('placeholder', 'Enter your task');
-checkbox.setAttribute('type', 'checkbox');
-
-
-task.appendChild(exit);
-btn.addEventListener('click', submit)
-
-function submit() {
-    
-    let taskli = document.createElement('li');
-    taskli.textContent = input.value;
-    ullist.appendChild(taskli);
-    taskli.appendChild(checkbox);
-    task2.appendChild(ullist);
-    
-
-    let tasklis = document.createElement('li');
-    tasklis.textContent = input.value;
-    ullist.appendChild(tasklis);
-    tasklis.appendChild(checkbox);
-    task2.appendChild(ullist);
-    
+  
+    function typeWriter() {
+        if (index < msg.length) {
+            autoText.innerHTML += msg.charAt(index);
+            index++;
+            typeTimeout = setTimeout(typeWriter, 30);
+        }
+    }
 
     
-}
+    function updateProgress() {
+        const total = todoList.children.length + doneList.children.length;
+        const done = doneList.children.length;
+        const percentage = total === 0 ? 0 : Math.round((done / total) * 100);
+        progressFill.style.width = `${percentage}%`;
+        statusText.innerText = `${percentage}% Completed`;
+    }
 
-
-
-exit.addEventListener('click', ext)
-function ext() {
-    newTask.remove();
+    
+    homeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        todoList.innerHTML = '';
+        doneList.innerHTML = '';
+        updateProgress();
+        clearTimeout(typeTimeout);
+        autoText.innerHTML = '';
+        autoText.style.display = 'block';
+        index = 0;
+        typeWriter();
+    });
 
     typeWriter();
-}
 
+    
+    fab.addEventListener('click', () => {
+        if (document.querySelector('.new-task')) return;
+        autoText.style.display = 'none';
 
-newTask.appendChild(exit);
-newTask.appendChild(btn);
-newTask.appendChild(input);
-main.appendChild(newTask);
+        const modal = document.createElement('div');
+        modal.classList.add('new-task');
+        modal.innerHTML = `
+            <input type="text" placeholder="Mission Objective..." id="m-input">
+            <button class="deploy-btn" id="m-deploy">DEPLOY MISSION</button>
+            <button id="m-cancel" style="border:none; background:none; color:gray; cursor:pointer;">Cancel</button>
+        `;
+        document.body.appendChild(modal);
 
-}
+        const input = modal.querySelector('#m-input');
+        input.focus();
 
+        modal.querySelector('#m-deploy').addEventListener('click', () => {
+            const val = input.value.trim();
+            if (val !== "") {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <input type="checkbox">
+                    <span>${val}</span>
+                    <button class="task-delete-btn">✕</button>
+                `;
+                
+                const cb = li.querySelector('input');
+                const del = li.querySelector('.task-delete-btn');
 
-task.addEventListener('click', taskList);
+                
+                cb.addEventListener('change', () => {
+                    if (cb.checked) doneList.appendChild(li);
+                    else todoList.appendChild(li);
+                    updateProgress();
+                });
 
-function taskList() {
-  overall.remove();
-  overallContainer.appendChild (task);
-  
-  
-}
+                
+                del.addEventListener('click', () => {
+                    li.style.transform = "scale(0.9)";
+                    li.style.opacity = "0";
+                    setTimeout(() => {
+                        li.remove();
+                        updateProgress();
+                    }, 200);
+                });
 
-let exit2 = document.createElement('button');
-exit2.textContent = 'X';
-exit2.classList.add('exit-btn');
-task.appendChild(exit2);
+                todoList.appendChild(li);
+                updateProgress();
+                modal.remove();
+            }
+        });
+
+        modal.querySelector('#m-cancel').addEventListener('click', () => modal.remove());
+    });
+});
